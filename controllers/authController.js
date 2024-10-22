@@ -182,7 +182,7 @@ exports.removeFromCart = async (req, res) => {
     }
 
     const cartItemIndex = user.cart.findIndex(item => item.productName === productName);
-    
+
     if (cartItemIndex === -1) {
       return res.status(404).json({ error: 'Item not found in cart!' });
     }
@@ -204,7 +204,6 @@ exports.removeFromCart = async (req, res) => {
     res.status(500).json({ error: 'Failed to remove product from cart!' });
   }
 };
-
 
 exports.payment = async (req, res) => {
   const { email, productName } = req.body;
