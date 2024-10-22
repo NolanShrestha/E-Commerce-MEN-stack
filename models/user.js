@@ -35,6 +35,14 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  cart: {
+    type: [
+      {
+        productName: { type: String, required: true },
+        quantity: { type: Number, required: true, default: 1 },
+      },
+    ],
+  },
 });
 
 const User = mongoose.model('User', userSchema);

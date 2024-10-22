@@ -135,53 +135,134 @@ exports.addProduct = async (req, res) => {
   }
 };
 
-exports.payment = async (req, res) => {
+exports.addToCart = async (req, res) => {
   const { email, productName, quantity } = req.body;
-  console.log(email + " " + productName + " " + quantity);
 
   try {
-    const user = await User.findOne({ email });
     const product = await Product.findOne({ name: productName });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found!' });
-    }
-
     if (!product) {
-      return res.status(404).json({ error: 'Invalid Product!' });
+      return res.status(404).json({ error: 'Product not found!' });
     }
-
     if (product.stock < quantity) {
       return res.status(400).json({ error: 'Insufficient stock!' });
     }
 
-    const totalAmount = product.price * quantity;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found!' });
+    }
 
-    if (user.balance >= totalAmount) {
-      user.balance -= totalAmount;
-      product.stock -= quantity;
+    const cartItemIndex = user.cart.findIndex(item => item.productName === productName);
 
-      const payment = new Payment({
-        userId: user._id,
-        productId: product._id,
-        amount: totalAmount,
-      });
-
-      await payment.save();
-      await user.save();
-      await product.save();
-
-      return res.status(200).json({
-        message: 'Payment successful!',
-        updatedBalance: user.balance,
-        paymentDetails: {
-          amount: payment.amount,
-          quantity,
-        },
-      });
+    if (cartItemIndex > -1) {
+      user.cart[cartItemIndex].quantity += quantity;
     } else {
+      user.cart.push({ productName, quantity });
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'Product added to cart successfully!',
+      cart: user.cart,
+    });
+  } catch (error) {
+    console.error('Add to cart error:', error);
+    res.status(500).json({ error: 'Failed to add product to cart!' });
+  }
+};
+
+exports.removeFromCart = async (req, res) => {
+  const { email, productName, quantity } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found!' });
+    }
+
+    const cartItemIndex = user.cart.findIndex(item => item.productName === productName);
+    
+    if (cartItemIndex === -1) {
+      return res.status(404).json({ error: 'Item not found in cart!' });
+    }
+
+    if (quantity >= user.cart[cartItemIndex].quantity) {
+      user.cart.splice(cartItemIndex, 1);
+    } else {
+      user.cart[cartItemIndex].quantity -= quantity;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'Product removed from cart successfully!',
+      cart: user.cart,
+    });
+  } catch (error) {
+    console.error('Remove from cart error:', error);
+    res.status(500).json({ error: 'Failed to remove product from cart!' });
+  }
+};
+
+
+exports.payment = async (req, res) => {
+  const { email, productName } = req.body;
+  try {
+    const user = await User.findOne({ email }).populate('cart.productName');
+    const product = await Product.findOne({ name: productName });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found!' });
+    }
+    let totalCost = 0;
+    const cartProducts = [];
+
+    for (const cartItem of user.cart) {
+      const product = await Product.findOne({ name: cartItem.productName });
+      if (!product) {
+        return res.status(400).json({ error: `Product ${cartItem.productName} not found in stock!` });
+      }
+
+      if (product.stock < cartItem.quantity) {
+        return res.status(400).json({ error: `Insufficient stock for ${cartItem.productName}!` });
+      }
+
+      totalCost += product.price * cartItem.quantity;
+      cartProducts.push({ product, quantity: cartItem.quantity });
+    }
+
+    if (user.balance < totalCost) {
       return res.status(400).json({ error: 'Insufficient balance!' });
     }
+
+    user.balance -= totalCost;
+
+    for (const item of cartProducts) {
+      item.product.stock -= item.quantity;
+      await item.product.save();
+    }
+
+    const newPayment = new Payment({
+      userId: user._id,
+      productId: product._id,
+      amount: totalCost,
+      productDetails: cartProducts.map(item => ({
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+    });
+    await newPayment.save();
+
+    user.cart = [];
+    await user.save();
+
+    res.status(200).json({
+      message: 'Payment successful!',
+      totalCost,
+      updatedBalance: user.balance,
+      paymentDetails: newPayment,
+    });
+
   } catch (error) {
     console.error('Payment error:', error);
     res.status(500).json({ error: 'Payment failed!' });
@@ -190,7 +271,6 @@ exports.payment = async (req, res) => {
 
 exports.review = async (req, res) => {
   const { productName, email, rating, reviewText } = req.body;
-
   try {
     const user = await User.findOne({ email });
     const product = await Product.findOne({ name: productName });
