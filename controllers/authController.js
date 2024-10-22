@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Product = require('../models/product');
 const Payment = require('../models/payment');
+const Review = require('../models/review');
 
 const JWT_SECRET = '3sIueX5FbB9B1G4vX9+OwI7zFt/P9FPW3sLd0R9MxHQ=';
 
@@ -186,6 +187,45 @@ exports.login = async (req, res) => {
       res.status(500).json({ error: 'Payment failed!' });
     }
   };
+
+exports.review = async (req, res) => {
+    const { productName, email, rating, reviewText } = req.body;
+
+    try {
+      const user = await User.findOne({ email });
+      const product = await Product.findOne({ name: productName });
+
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found!' });
+        }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found!' });
+        }
+
+        const review = new Review({
+            productId: product._id,
+            userId: user._id,
+            rating,
+            reviewText
+        });
+
+        await review.save();
+
+        res.status(201).json({
+            message: 'Review submitted successfully!',
+            review: {
+                productId: review.productId,
+                userId: review.userId,
+                rating: review.rating,
+                reviewText: review.reviewText
+            }
+        });
+    } catch (error) {
+        console.error('Error submitting review:', error);
+        res.status(500).json({ error: 'Failed to submit review!' });
+    }
+};
+
   
   
 
