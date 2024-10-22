@@ -16,11 +16,6 @@ const paymentSchema = new mongoose.Schema({
     required: [true, 'Payment amount is required'],
     min: [0, 'Payment amount must be greater than or equal to 0'],
   },
-  transactionId: {
-    type: String,
-    unique: true,
-    required: true,
-  },
 }, { timestamps: true }); 
 
 const Payment = mongoose.model('Payment', paymentSchema);

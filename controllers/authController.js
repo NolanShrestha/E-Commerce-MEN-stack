@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Product = require('../models/product');
+const Payment = require('../models/payment');
 
 const JWT_SECRET = '3sIueX5FbB9B1G4vX9+OwI7zFt/P9FPW3sLd0R9MxHQ=';
 
@@ -132,6 +133,60 @@ exports.login = async (req, res) => {
       res.status(500).json({ message: 'Failed to add product!', error: error.message });
     }
   };
+  
+  exports.payment = async (req, res) => {
+    const { email, productName, quantity } = req.body;
+    console.log(email +" "+ productName + " "+ quantity);
+  
+    try {
+      const user = await User.findOne({ email });
+      const product = await Product.findOne({ name: productName });
+  
+      if (!user) {
+        return res.status(404).json({ error: 'User not found!' });
+      }
+  
+      if (!product) {
+        return res.status(404).json({ error: 'Invalid Product!' });
+      }
+  
+      if (product.stock < quantity) {
+        return res.status(400).json({ error: 'Insufficient stock!' });
+      }
+  
+      const totalAmount = product.price * quantity;
+  
+      if (user.balance >= totalAmount) {
+        user.balance -= totalAmount;
+        product.stock -= quantity;
+  
+        const payment = new Payment({
+          userId: user._id,
+          productId: product._id,
+          amount: totalAmount,
+        });
+  
+        await payment.save(); 
+        await user.save(); 
+        await product.save(); 
+  
+        return res.status(200).json({
+          message: 'Payment successful!',
+          updatedBalance: user.balance,
+          paymentDetails: {
+            amount: payment.amount,
+            quantity,
+          },
+        });
+      } else {
+        return res.status(400).json({ error: 'Insufficient balance!' });
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      res.status(500).json({ error: 'Payment failed!' });
+    }
+  };
+  
   
 
 
