@@ -158,6 +158,37 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
+exports.editProduct = async (req, res) => {
+  const { email, productName, newName, newDescription, newPrice, newStock } = req.body;
+  console.log(email+productName+newName+newDescription+newPrice+newStock);
+  
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: 'Access denied!' });
+    }
+
+    const product = await Product.findOne({ name: productName });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found!' });
+    }
+
+    if (newName) product.name = newName;
+    if (newDescription) product.description = newDescription;
+    if (newPrice) product.price = newPrice;
+    if (newStock) product.stock = newStock;
+
+    await product.save();
+
+    res.status(200).json({ message: 'Product updated successfully!', product });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ message: 'Failed to update product!', error: error.message });
+  }
+};
+
+
 exports.addToCart = async (req, res) => {
   const { email, productName, quantity } = req.body;
 

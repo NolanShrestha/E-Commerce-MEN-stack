@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, update, addProduct, deleteProduct, addToCart, removeFromCart, payment, review
+const { register, login, update, addProduct, deleteProduct, editProduct, addToCart, removeFromCart, payment, review,
     } = require('../controllers/authController');
 const router = express.Router();
 
@@ -8,6 +8,7 @@ router.post('/login', login);
 router.patch('/update', update);
 router.post('/addProduct', addProduct);
 router.delete("/deleteProduct", deleteProduct);
+router.patch("/editProduct", editProduct);
 router.post("/addToCart", addToCart);
 router.post("/removeFromCart", removeFromCart);
 router.post("/payment", payment);
