@@ -24,7 +24,7 @@ const productSchema = new mongoose.Schema({
   reviews: [{
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User', // Reference to the User model
+      ref: 'User', 
       required: true,
     },
     rating: {
@@ -37,12 +37,8 @@ const productSchema = new mongoose.Schema({
       type: String,
       trim: true,
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
   }],
-}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
+}, { timestamps: true }); 
 
 const Product = mongoose.model('Product', productSchema);
 

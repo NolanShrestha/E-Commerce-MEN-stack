@@ -6,14 +6,9 @@ const paymentSchema = new mongoose.Schema({
     ref: 'User', 
     required: true,
   },
-  orderId: {
+  productId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Order', 
-    required: true,
-  },
-  paymentMethod: {
-    type: String,
-    enum: ['credit_card', 'paypal', 'bank_transfer', 'wallet', 'cash_on_delivery'],
+    ref: 'Product', 
     required: true,
   },
   amount: {
@@ -21,33 +16,10 @@ const paymentSchema = new mongoose.Schema({
     required: [true, 'Payment amount is required'],
     min: [0, 'Payment amount must be greater than or equal to 0'],
   },
-  currency: {
-    type: String,
-    default: 'USD', 
-    enum: ['USD', 'EUR', 'GBP', 'INR', 'CAD'], 
-    required: true,
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'completed', 'failed', 'refunded'],
-    default: 'pending', 
-  },
   transactionId: {
     type: String,
     unique: true,
     required: true,
-  },
-  paymentDate: {
-    type: Date,
-    default: Date.now, 
-  },
-  refundReason: {
-    type: String,
-    default: null,
-  },
-  refundDate: {
-    type: Date,
-    default: null,
   },
 }, { timestamps: true }); 
 

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const Product = require('../models/product');
 
 const JWT_SECRET = '3sIueX5FbB9B1G4vX9+OwI7zFt/P9FPW3sLd0R9MxHQ=';
 
@@ -105,6 +106,30 @@ exports.login = async (req, res) => {
     } catch (error) {
       console.error('Error updating user:', error);
       res.status(500).json({ error: 'Failed to update user information!' });
+    }
+  };
+
+  exports.addProduct =  async (req, res) => {
+    const { email, name, description, price, stock } = req.body;
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user || user.role!=="admin") {
+        return res.status(403).json({ message: 'Access denied!' });
+      }
+      const product = new Product({
+        name,
+        description,
+        price,
+        stock
+      });
+  
+      await product.save();
+  
+      res.status(201).json({ message: 'Product added successfully!', product });
+    } catch (error) {
+      console.error('Error adding product:', error);
+      res.status(500).json({ message: 'Failed to add product!', error: error.message });
     }
   };
   
