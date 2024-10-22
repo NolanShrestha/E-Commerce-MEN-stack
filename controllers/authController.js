@@ -135,6 +135,29 @@ exports.addProduct = async (req, res) => {
   }
 };
 
+exports.deleteProduct = async (req, res) => {
+  const { email, productName } = req.body;
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: 'Access denied!' });
+    }
+
+    const product = await Product.findOne({ name: productName });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found!' });
+    }
+
+    await Product.deleteOne({ _id: product._id });
+
+    res.status(200).json({ message: 'Product deleted successfully!', product });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ message: 'Failed to delete product!', error: error.message });
+  }
+};
+
 exports.addToCart = async (req, res) => {
   const { email, productName, quantity } = req.body;
 
