@@ -188,6 +188,19 @@ exports.editProduct = async (req, res) => {
   }
 };
 
+exports.getProducts = async (req, res) => {
+  try {
+    const products = await Product.find({}, 'name description price stock -_id'); 
+
+    res.status(200).json({
+      message: 'Products retrieved successfully!',
+      products,
+    });
+  } catch (error) {
+    console.error('Error retrieving products:', error);
+    res.status(500).json({ error: 'Failed to retrieve products' });
+  }
+};
 
 exports.addToCart = async (req, res) => {
   const { email, productName, quantity } = req.body;
