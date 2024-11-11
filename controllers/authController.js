@@ -98,7 +98,6 @@ exports.update = async (req, res) => {
     res.status(200).json({
       message: 'User information updated successfully!',
       token,
-      userId: user._id,
       updatedUser: {
         username: user.username,
         email: user.email,
