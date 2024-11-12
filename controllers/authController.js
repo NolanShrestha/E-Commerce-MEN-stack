@@ -9,7 +9,7 @@ const JWT_SECRET = '3sIueX5FbB9B1G4vX9+OwI7zFt/P9FPW3sLd0R9MxHQ=';
 
 exports.register = async (req, res) => {
   const { username, email, password, phone, role, balance } = req.body;
-  console.log(username + email + password + phone + role + balance);
+  // console.log(username + email + password + phone + role + balance);
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
